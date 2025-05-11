@@ -4,7 +4,7 @@ import os
 
 from src.EA.ES import ES, ES_opts
 from src.world.World import World
-from src.world.envs.TestFunctions import f_reversed_ackley
+from src.world.envs.TestFunctions import f_reversed_ackley, f_rosenbrock
 from src.utils.Filesys import get_project_root
 
 """ Large programming projects are often modularised in different components. 
@@ -39,10 +39,13 @@ class AckleyWorld(World):
 class MyWorld(World): #TODO
 
     def geno2pheno(self, genotype):
-        raise NotImplementedError
-
+        x, y = genotype
+        return np.array([x, y])
+        
     def evaluate_individual(self, genotype):
-        raise NotImplementedError
+        x, y = self.geno2pheno(genotype)
+        fitness = f_rosenbrock(x, y)
+        return fitness
 
 
 def run_EA(ea, world):
@@ -77,7 +80,21 @@ def main():
 
     #%% Report results
     #TODO: Load the results and make a fitness curve plot.
-    fitnesses_full = np.load(os.path.join(results_dir, 'full_f.npy'))
+    try:
+        fitnesses_full = np.load(os.path.join(results_dir, 'full_f.npy'))
+    except FileNotFoundError:
+        print("Error: Results file not found. Ensure the evolutionary algorithm ran successfully.")
+        return
+    mean_f = np.mean(fitnesses_full, axis=1)
+    std_f = np.std(fitnesses_full, axis=1)
+    gens = np.arange(0, 100, 1)
+    plt.plot(gens, mean_f, color='r')
+    plt.fill_between(gens, mean_f - std_f, mean_f + std_f, alpha=0.5)
+    plt.xlabel('Generation')
+    plt.ylabel('Fitness')
+    plt.savefig('Ackley_f.pdf')
+    plt.close()
+
 
 
     #%% Change the World
